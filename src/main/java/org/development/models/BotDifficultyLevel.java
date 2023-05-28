@@ -1,6 +1,6 @@
 package org.development.models;
 
-public enum DifficultyLevel {
+public enum BotDifficultyLevel {
     EASY,
     MEDIUM,
     HARD;
