@@ -5,6 +5,8 @@ import org.development.strategies.winningStrategies.WinningStrategy;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 @Data
 public class Game {
     private List<Player> players;
@@ -24,18 +26,78 @@ public class Game {
         this.currentMovePlayerIndex = 0;
     }
 
-    public static class Builder {
-        private final List<Player> players = new ArrayList<>();
-        int dimension;
-        private final List<WinningStrategy> winningStrategies = new ArrayList<>();
+    public void displayBoard() {
+        gameBoard.displayBoard();
+    }
 
-        public Builder addPlayer(String name, Symbol symbol, PlayerType playerType) {
-            this.players.add(new Player(name, symbol, playerType));
+    public void makeMove() {
+        Player currentPlayer = players.get(currentMovePlayerIndex);
+        Cell cellToMove = currentPlayer.makeMove(gameBoard);
+
+        if(isInvalidCell(cellToMove) || !getGameBoardCell(cellToMove.row, cellToMove.col).cellState.equals(CellState.FREE)) {
+            System.out.println("Invalid Move");
+            return;
+        }
+
+        cellToMove.player = currentPlayer;
+        cellToMove.cellState = CellState.PLACED;
+
+        gameBoard.board.get(cellToMove.row).set(cellToMove.col, cellToMove);
+        moves.add(new Move(currentPlayer, cellToMove));
+        currentMovePlayerIndex += 1;
+        currentMovePlayerIndex %= players.size();
+    }
+
+    private Cell getGameBoardCell(int row, int col) {
+        return gameBoard.board.get(row).get(col);
+    }
+
+    public Player getCurrentPlayerTurn() {
+        return players.get(currentMovePlayerIndex);
+    }
+
+    public void checkGameStatus() {
+        if(moves.isEmpty()) {
+            return;
+        }
+        AtomicBoolean isWon = new AtomicBoolean(false);
+        winningStrategies.forEach(winningStrategy -> {
+            if(winningStrategy.checkWinner(gameBoard, moves.get(moves.size()-1))) {
+                isWon.set(true);
+                return;
+            }
+        });
+        if(isWon.get()) {
+            gameStatus = GameStatus.ENDED;
+            winner = moves.get(moves.size()-1).getPlayer();
+        }
+        if(moves.size() == gameBoard.size * gameBoard.size) {
+            gameStatus = GameStatus.DRAW;
+        }
+    }
+
+    public boolean isInvalidCell(Cell cell) {
+        return cell.row < 0 || cell.col < 0 || cell.row > gameBoard.size - 1 || cell.col > gameBoard.size - 1;
+    }
+
+    public static Builder getBuilder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private List<Player> players;
+        int dimension;
+        private List<WinningStrategy> winningStrategies;
+
+        private Builder() {}
+
+        public Builder addPlayers(List<Player> players) {
+            this.players = players;
             return this;
         }
 
-        public Builder addWinningStrategy(WinningStrategy winningStrategy) {
-            this.winningStrategies.add(winningStrategy);
+        public Builder addWinningStrategies(List<WinningStrategy> winningStrategies) {
+            this.winningStrategies = winningStrategies;
             return this;
         }
 
@@ -51,6 +113,9 @@ public class Game {
             for (Player player : players) {
                 validatePlayer(player);
             }
+            if(players.isEmpty() || (players.size() + 1) != dimension) {
+                throw new Exception("Invalid number of players");
+            }
             return new Game(players, dimension, winningStrategies);
         }
 
@@ -58,7 +123,7 @@ public class Game {
             if(players.isEmpty()) {
                 throw new Exception("No players assigned");
             }
-            if(player.name == null || player.name.isEmpty()) {
+            if(player.getName() == null || player.getName().isEmpty()) {
                 throw new Exception("Invalid player name");
             }
         }

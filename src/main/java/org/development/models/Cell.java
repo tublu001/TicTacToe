@@ -1,5 +1,8 @@
 package org.development.models;
 
+import lombok.Data;
+
+@Data
 public class Cell {
     int row;
     int col;
@@ -10,5 +13,9 @@ public class Cell {
         this.row = row;
         this.col = col;
         cellState = CellState.FREE;
+    }
+
+    public void displayCell() {
+        System.out.print("| " + ((cellState.equals(CellState.FREE)? "-": player.getSymbol().symbol) + " | "));
     }
 }

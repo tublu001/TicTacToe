@@ -1,6 +1,14 @@
 package org.development.models;
 
+import lombok.Data;
+
+@Data
 public class Move {
-    Player player;
-    Cell cell;
+    private Player player;
+    private Cell cell;
+
+    public Move(Player player, Cell cell) {
+        this.player = player;
+        this.cell = cell;
+    }
 }

@@ -14,7 +14,7 @@ public class Bot extends Player{
     }
 
     @Override
-    public Cell makeMove() {
-        return botPlayingStrategy.makeMove(new Board(3));
+    public Cell makeMove(Board gameBoard) {
+        return botPlayingStrategy.makeMove(gameBoard);
     }
 }
